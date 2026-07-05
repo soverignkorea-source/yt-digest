@@ -1,0 +1,47 @@
+name: weekly-youtube-digest
+
+on:
+  schedule:
+    # 토요일 06:00 KST = 금요일 21:00 UTC
+    - cron: '0 21 * * 5'
+  workflow_dispatch: {}   # 수동 실행 버튼
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 1단계 영상 수집
+        env:
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
+        run: python collect.py
+
+      - name: 2단계 Claude 분석
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python analyze.py
+
+      - name: 3단계 HTML 생성
+        run: python build_html.py
+
+      - name: 결과 커밋 및 푸시
+        run: |
+          git config user.name "digest-bot"
+          git config user.email "actions@github.com"
+          git add docs/ data/ channel_ids_cache.json || true
+          git diff --cached --quiet || git commit -m "weekly digest $(date -u +%Y-%m-%d)"
+          git push

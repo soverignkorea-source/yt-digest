@@ -1,0 +1,22 @@
+{
+  "_설명": "유튜브 투자 다이제스트 수집 대상 채널 목록. handle만 추가/삭제하면 됩니다. channel_id는 스크립트가 자동으로 조회해 캐시합니다.",
+  "channels": [
+    { "name": "서재형의 투자교실",        "handle": "@karrlseo" },
+    { "name": "태린이아빠 주식투자",      "handle": "@Taerins_Dad" },
+    { "name": "IT의 신 이형수",           "handle": "@GODofIT_official" },
+    { "name": "월가아재의 과학적 투자",   "handle": "@wsaj" },
+    { "name": "이남우의 좋은주식연구소",  "handle": "@goodstockbadstock" },
+    { "name": "월텍남",                   "handle": "@waltechman" },
+    { "name": "도키와 미국주식",          "handle": "@Doki_Investing" },
+    { "name": "미국주식으로 은퇴하기-미주은", "handle": "@mijooeun" },
+    { "name": "미국주식으로 부자되기-미주부", "handle": "@mizubu" },
+    { "name": "수페TV",                   "handle": "@supe-tv" },
+    { "name": "기릿의 주식노트",          "handle": "@코스닥" },
+    { "name": "탁튜브 김탁",              "handle": "@탁튜브김탁" },
+    { "name": "채국장의 머니버스",        "handle": "@chaegookjang" },
+    { "name": "힐링여행자",               "handle": "@힐링여행자" },
+    { "name": "부자일기",                 "handle": "@부자일기-투자에대한" },
+    { "name": "10K지주",                  "handle": "@10kjiju" },
+    { "name": "염블리와 함께 [LS증권]",   "handle": "@yeomvely" }
+  ]
+}
