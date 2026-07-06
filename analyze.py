@@ -95,18 +95,24 @@ def call_claude(prompt, max_tokens=2000, retries=3):
     for attempt in range(retries):
         try:
             r = requests.post(API_URL, headers=HEADERS,
-                              json=body, timeout=180)
+                              json=body, timeout=600)
             if r.status_code == 429 or r.status_code >= 500:
                 wait = 15 * (attempt + 1)
-                print(f"    재시도 대기 {wait}s (HTTP {r.status_code})")
+                print(f"    재시도 대기 {wait}s (HTTP {r.status_code})",
+                      flush=True)
                 time.sleep(wait)
                 continue
-            r.raise_for_status()
+            if r.status_code >= 400:
+                print(f"    API 오류 {r.status_code}: {r.text[:300]}",
+                      flush=True)
+                return None
             data = r.json()
+            if data.get("stop_reason") == "max_tokens":
+                print("    ! 경고: 출력이 토큰 한도에서 잘림", flush=True)
             return "".join(b.get("text", "") for b in data["content"]
                            if b.get("type") == "text")
         except requests.RequestException as e:
-            print(f"    API 오류: {e}")
+            print(f"    API 오류: {e}", flush=True)
             time.sleep(10 * (attempt + 1))
     return None
 
@@ -180,15 +186,36 @@ def main():
         sys.exit("분석할 영상이 없습니다.")
 
     # ---------- 2단계: 종합 분석 ----------
-    print(f"\n[종합 분석] 영상 {n_videos}개")
+    print(f"\n[종합 분석] 영상 {n_videos}개", flush=True)
     synthesis_raw = call_claude(
         SYNTHESIS_PROMPT.format(
             n_channels=len(analysis["channels"]),
             n_videos=n_videos,
             video_summaries=json.dumps(all_video_rows,
                                        ensure_ascii=False)),
-        max_tokens=6000)
+        max_tokens=16000)
     synthesis = parse_json(synthesis_raw)
+
+    if not synthesis:
+        # 실패 시 디버깅 정보 출력 후 축약 입력으로 1회 재시도
+        if synthesis_raw:
+            print("--- 응답 앞부분 ---", flush=True)
+            print(synthesis_raw[:500], flush=True)
+            print("--- 응답 끝부분 ---", flush=True)
+            print(synthesis_raw[-500:], flush=True)
+        print("[재시도] 주목도 상위 영상으로 축약", flush=True)
+        trimmed = sorted(all_video_rows,
+                         key=lambda r: r.get("주목도") or 1,
+                         reverse=True)[:40]
+        synthesis_raw = call_claude(
+            SYNTHESIS_PROMPT.format(
+                n_channels=len(analysis["channels"]),
+                n_videos=len(trimmed),
+                video_summaries=json.dumps(trimmed,
+                                           ensure_ascii=False)),
+            max_tokens=16000)
+        synthesis = parse_json(synthesis_raw)
+
     if not synthesis:
         sys.exit("종합 분석 파싱 실패")
     analysis["synthesis"] = synthesis
